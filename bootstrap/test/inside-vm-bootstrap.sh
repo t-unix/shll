@@ -50,10 +50,8 @@ else
 fi
 
 # --- Summary -----------------------------------------------------------------
+printf '\n\033[1;32m=== Bootstrap complete ===\033[0m\n\n'
 cat <<EOF
-
-\033[1;32m=== Bootstrap complete ===\033[0m
-
 Next steps (run inside the VM with \`orb -m shll-test shell\`):
 
   1. Authenticate Claude Code:
