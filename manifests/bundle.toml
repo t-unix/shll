@@ -30,7 +30,7 @@ scrubbed = true
 src      = "fish/lib"
 dst      = "$XDG_CONFIG_HOME/fish/lib"
 render   = "copy-tree"
-requires = ["fish"]
+requires = ["fish", "bc"]    # bc is needed by calcolor.fish (insh prompt color math)
 scrubbed = true
 
 [[file]]

@@ -242,6 +242,39 @@ check = "command -v nvim"
 cmd   = "doas pkg_add neovim"
 
 # ---------------------------------------------------------------------------
+# bc — required by fish/lib/calcolor.fish (insh-theme color math).
+# Ships on macOS by default; needs explicit install on most Linux distros.
+# ---------------------------------------------------------------------------
+
+[bc.macos]
+check = "command -v bc"
+cmd   = "true"  # system bc is always present on macOS
+
+[bc.debian]
+check = "command -v bc"
+cmd   = "sudo apt-get install -y bc"
+
+[bc.ubuntu]
+check = "command -v bc"
+cmd   = "sudo apt-get install -y bc"
+
+[bc.arch]
+check = "command -v bc"
+cmd   = "sudo pacman -S --noconfirm bc"
+
+[bc.fedora]
+check = "command -v bc"
+cmd   = "sudo dnf install -y bc"
+
+[bc.freebsd]
+check = "command -v bc"
+cmd   = "true"  # bc is in base FreeBSD
+
+[bc.openbsd]
+check = "command -v bc"
+cmd   = "true"  # bc is in base OpenBSD
+
+# ---------------------------------------------------------------------------
 # pass — needs gnupg as a dependency
 # ---------------------------------------------------------------------------
 
