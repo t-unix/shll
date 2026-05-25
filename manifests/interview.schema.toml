@@ -120,6 +120,15 @@ default = 28800
 when    = "state.interview.pass_setup == true"
 writes  = "interview.gpg_cache_ttl"
 
+# ----- Default shell -----
+
+[[question]]
+id      = "fish_default_shell"
+prompt  = "Make fish your default login shell? (Runs `chsh -s $(command -v fish)` — needs your password.)"
+type    = "bool"
+default = true
+writes  = "interview.fish_default_shell"
+
 # ----- Terminal preferences -----
 
 [[question]]

@@ -152,6 +152,9 @@ pre   = [
   "sudo apt-get update",
 ]
 cmd   = "sudo apt-get install -y fish"
+post  = [
+  'grep -qxF "$(command -v fish)" /etc/shells || (command -v fish | sudo tee -a /etc/shells)',
+]
 
 [fish.ubuntu]
 check = "command -v fish"
@@ -160,22 +163,37 @@ pre   = [
   "sudo apt-get update",
 ]
 cmd   = "sudo apt-get install -y fish"
+post  = [
+  'grep -qxF "$(command -v fish)" /etc/shells || (command -v fish | sudo tee -a /etc/shells)',
+]
 
 [fish.arch]
 check = "command -v fish"
 cmd   = "sudo pacman -S --noconfirm fish"
+post  = [
+  'grep -qxF "$(command -v fish)" /etc/shells || (command -v fish | sudo tee -a /etc/shells)',
+]
 
 [fish.fedora]
 check = "command -v fish"
 cmd   = "sudo dnf install -y fish"
+post  = [
+  'grep -qxF "$(command -v fish)" /etc/shells || (command -v fish | sudo tee -a /etc/shells)',
+]
 
 [fish.freebsd]
 check = "command -v fish"
 cmd   = "sudo pkg install -y fish"
+post  = [
+  'grep -qxF "$(command -v fish)" /etc/shells || (command -v fish | sudo tee -a /etc/shells)',
+]
 
 [fish.openbsd]
 check = "command -v fish"
 cmd   = "doas pkg_add fish"
+post  = [
+  'grep -qxF "$(command -v fish)" /etc/shells || (command -v fish | doas tee -a /etc/shells)',
+]
 
 # ---------------------------------------------------------------------------
 # fzf
@@ -217,13 +235,30 @@ cmd   = "doas pkg_add fzf"
 check = "command -v nvim"
 cmd   = "brew install neovim"
 
+# Debian 12 / Ubuntu 22.04 LTS ship nvim 0.7.x in apt, which lacks
+# vim.fn.stdpath("state") (added in 0.8). The bundled init.lua needs >=0.8.
+# Install the upstream stable release tarball into /opt and symlink.
 [neovim.debian]
-check = "command -v nvim"
-cmd   = "sudo apt-get install -y neovim"
+check = "test -x /usr/local/bin/nvim && /usr/local/bin/nvim --version | head -1 | grep -qE 'v(0\\.(1[0-9]|[89])|[1-9])'"
+pre = [
+  "sudo apt-get install -y curl",
+  "sudo mkdir -p /opt",
+  'curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-$(uname -m | sed s/aarch64/arm64/).tar.gz" -o /tmp/nvim.tar.gz',
+  "sudo tar -xzf /tmp/nvim.tar.gz -C /opt",
+  "rm /tmp/nvim.tar.gz",
+]
+cmd = 'sudo ln -sf "/opt/nvim-linux-$(uname -m | sed s/aarch64/arm64/)/bin/nvim" /usr/local/bin/nvim'
 
 [neovim.ubuntu]
-check = "command -v nvim"
-cmd   = "sudo apt-get install -y neovim"
+check = "test -x /usr/local/bin/nvim && /usr/local/bin/nvim --version | head -1 | grep -qE 'v(0\\.(1[0-9]|[89])|[1-9])'"
+pre = [
+  "sudo apt-get install -y curl",
+  "sudo mkdir -p /opt",
+  'curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-$(uname -m | sed s/aarch64/arm64/).tar.gz" -o /tmp/nvim.tar.gz',
+  "sudo tar -xzf /tmp/nvim.tar.gz -C /opt",
+  "rm /tmp/nvim.tar.gz",
+]
+cmd = 'sudo ln -sf "/opt/nvim-linux-$(uname -m | sed s/aarch64/arm64/)/bin/nvim" /usr/local/bin/nvim'
 
 [neovim.arch]
 check = "command -v nvim"
@@ -240,6 +275,39 @@ cmd   = "sudo pkg install -y neovim"
 [neovim.openbsd]
 check = "command -v nvim"
 cmd   = "doas pkg_add neovim"
+
+# ---------------------------------------------------------------------------
+# build-tools — cc + make. Needed by lazy.nvim plugins that compile native
+# code (nvim-treesitter parsers, LuaSnip jsregexp).
+# ---------------------------------------------------------------------------
+
+[build-tools.macos]
+check = "command -v cc && command -v make && xcode-select -p >/dev/null 2>&1"
+cmd   = "xcode-select --install || true"   # interactive GUI prompt; non-fatal
+
+[build-tools.debian]
+check = "command -v cc && command -v make"
+cmd   = "sudo apt-get install -y build-essential"
+
+[build-tools.ubuntu]
+check = "command -v cc && command -v make"
+cmd   = "sudo apt-get install -y build-essential"
+
+[build-tools.arch]
+check = "command -v cc && command -v make"
+cmd   = "sudo pacman -S --noconfirm --needed base-devel"
+
+[build-tools.fedora]
+check = "command -v cc && command -v make"
+cmd   = "sudo dnf groupinstall -y 'Development Tools'"
+
+[build-tools.freebsd]
+check = "command -v cc && command -v make"
+cmd   = "true"   # base FreeBSD ships cc + make
+
+[build-tools.openbsd]
+check = "command -v cc && command -v make"
+cmd   = "true"   # base OpenBSD ships cc + make
 
 # ---------------------------------------------------------------------------
 # bc — required by fish/lib/calcolor.fish (insh-theme color math).

@@ -141,20 +141,20 @@ scrubbed = true
 src      = "nvim/init.lua"
 dst      = "$XDG_CONFIG_HOME/nvim/init.lua"
 render   = "copy"
-requires = ["neovim"]
+requires = ["neovim", "build-tools"]
 scrubbed = true
 
 [[file]]
 src      = "nvim/lazy-lock.json"
 dst      = "$XDG_CONFIG_HOME/nvim/lazy-lock.json"
 render   = "copy"
-requires = ["neovim"]
+requires = ["neovim", "build-tools"]
 
 [[file]]
 src      = "nvim/lua"
 dst      = "$XDG_CONFIG_HOME/nvim/lua"
 render   = "copy-tree"
-requires = ["neovim"]
+requires = ["neovim", "build-tools"]
 scrubbed = true
 
 # ---------- pass scaffolding ----------

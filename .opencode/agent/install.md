@@ -34,7 +34,12 @@ The source of truth for tool installs is `manifests/tools.toml`. For bundled con
    - Apply render rule (`copy`, `template`, `symlink`, `copy-tree`) per `lib/render.md`.
    - Apply `mode` chmod if set.
    - For `scrubbed = true` entries: scrub skill must have passed before this run.
-5. **Summarize** — print which tools installed / skipped / failed, which bundle files landed where, backup location, next-step suggestions (`/shll-pass`, `/shll-publish`).
+5. **Set default shell** — if `state.interview.fish_default_shell` is true AND `command -v fish` resolves:
+   - Read current login shell (macOS: `dscl . -read /Users/$USER UserShell`; Linux/BSD: `getent passwd "$USER" | cut -d: -f7`).
+   - If already fish: skip.
+   - Else: `chsh -s "$(command -v fish)"` (interactive — prompts for the account password). Warn the user before running.
+   - Effect lands at next login; do not re-exec.
+6. **Summarize** — print which tools installed / skipped / failed, which bundle files landed where, backup location, next-step suggestions (`/shll-pass`, `/shll-publish`).
 
 Do NOT auto-run `/shll-pass` or `/shll-publish`. User-driven.
 

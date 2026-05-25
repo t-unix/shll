@@ -58,6 +58,21 @@ Iterate `[[file]]` entries in `bundle.toml` top-to-bottom. For each:
 6. If `mode` is set, `chmod` the destination accordingly.
 7. If `scrubbed = true`, the `scrub` skill must have passed before this run started. Do not re-run scrub here — that's the seed/lint workflow.
 
+### 4b. Set default shell (after install, before render)
+
+If `state.interview.fish_default_shell` is true AND `fish` is installed:
+
+1. Resolve the fish binary: `fish_bin=$(command -v fish)`. Abort the step (warn, don't fail) if empty.
+2. Ensure `$fish_bin` is in `/etc/shells`. The fish `post` step in `tools.toml` already does this for every supported OS; this is a defensive re-check, not a duplicate.
+3. Read the current login shell:
+   - macOS: `dscl . -read /Users/$USER UserShell | awk '{print $2}'`
+   - Linux/BSD: `getent passwd "$USER" | cut -d: -f7`
+4. If the current shell already equals `$fish_bin`, log "skip, already set" and return.
+5. Run `chsh -s "$fish_bin"`. This is interactive — it will prompt for the user's account password. Surface that expectation to the user before running.
+6. On success, log "default shell set to $fish_bin — takes effect at next login". Do NOT re-exec the user's current shell.
+
+If `state.interview.fish_default_shell` is false: skip this step entirely.
+
 ### 5. Post-install hand-off
 
 Print a short summary:
