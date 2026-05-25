@@ -1,0 +1,155 @@
+# interview.schema.toml — declarative interview definition.
+#
+# The `interview` skill walks [[question]] entries top-to-bottom. After each
+# answer, the skill writes the result to state/user.toml at the path given
+# by `writes` (TOML dotted path) and advances to the next question whose
+# `when` predicate evaluates true (or has no `when` clause).
+#
+# Per-question keys:
+#   id          — short stable identifier (interview's state-resume key)
+#   prompt      — text shown to the user
+#   help        — optional longer explanation
+#   type        — "bool" | "enum" | "string" | "path" | "int" | "secret"
+#                 (secret = never persisted to state, only used during the run)
+#   default     — optional default. Strings are quoted. Bools are true/false.
+#                 May reference {{ env:VAR }} or other state values resolved
+#                 BEFORE this question is asked.
+#   options     — for type="enum": array of {label, value} or bare strings.
+#   when        — boolean expression on prior answers. Supported operators:
+#                 == != && || ! . Strings in single quotes. Example:
+#                 when = "state.interview.pass_setup == true"
+#   writes      — dotted path under state where the answer lands.
+#   validate    — optional regex the answer must match (strings/paths).
+
+# ----- Identity -----
+
+[[question]]
+id     = "git_name"
+prompt = "Your name (for git commits)?"
+type   = "string"
+writes = "git.name"
+
+[[question]]
+id     = "git_email"
+prompt = "Your email (for git commits + GPG identity)?"
+type   = "string"
+default = "{{ env:USER }}@localhost"
+validate = '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+writes  = "git.email"
+
+# ----- Persistence -----
+
+[[question]]
+id      = "persistence_mode"
+prompt  = "How should your customizations persist to git?"
+help    = "fork = `gh repo fork` + push to a user-branch on the fork. downstream = `gh repo create` a new repo that tracks this one as upstream."
+type    = "enum"
+options = [
+  { label = "Fork + user-branch",  value = "fork" },
+  { label = "Separate downstream repo", value = "downstream" },
+]
+default = "fork"
+writes  = "interview.persistence_mode"
+
+[[question]]
+id      = "fork_branch_strategy"
+prompt  = "Single branch shared across all your machines, or one branch per hostname?"
+type    = "enum"
+options = ["single", "per-host"]
+default = "single"
+when    = "state.interview.persistence_mode == 'fork'"
+writes  = "interview.fork_branch_strategy"
+
+[[question]]
+id      = "downstream_repo_name"
+prompt  = "Name for the downstream repo (will be created as <you>/<name>)?"
+type    = "string"
+default = "shll-{{ hostname }}"
+when    = "state.interview.persistence_mode == 'downstream'"
+writes  = "interview.downstream_repo_name"
+
+# ----- Pass / GPG -----
+
+[[question]]
+id      = "pass_setup"
+prompt  = "Configure pass + GPG now? (You can run /shll-pass later instead.)"
+type    = "bool"
+default = true
+writes  = "interview.pass_setup"
+
+[[question]]
+id      = "gpg_existing"
+prompt  = "Use an existing GPG secret key, or generate a new one?"
+type    = "enum"
+options = ["existing", "generate"]
+default = "generate"
+when    = "state.interview.pass_setup == true"
+writes  = "interview.gpg_existing"
+
+[[question]]
+id      = "gpg_algo"
+prompt  = "GPG key type for the new key?"
+type    = "enum"
+options = ["ed25519", "rsa4096"]
+default = "ed25519"
+when    = "state.interview.pass_setup == true && state.interview.gpg_existing == 'generate'"
+writes  = "interview.gpg_algo"
+
+[[question]]
+id      = "gpg_expiry"
+prompt  = "GPG key expiry?"
+type    = "enum"
+options = ["1y", "2y", "5y", "never"]
+default = "2y"
+when    = "state.interview.pass_setup == true && state.interview.gpg_existing == 'generate'"
+writes  = "interview.gpg_expiry"
+
+[[question]]
+id      = "pass_git_remote"
+prompt  = "Git remote URL for your password store? (Leave blank to skip remote setup.)"
+type    = "string"
+default = ""
+when    = "state.interview.pass_setup == true"
+writes  = "interview.pass_git_remote"
+
+[[question]]
+id      = "gpg_cache_ttl"
+prompt  = "GPG agent passphrase cache TTL (seconds)? Default = 8h."
+type    = "int"
+default = 28800
+when    = "state.interview.pass_setup == true"
+writes  = "interview.gpg_cache_ttl"
+
+# ----- Terminal preferences -----
+
+[[question]]
+id      = "terminal_font_size"
+prompt  = "Default terminal font size?"
+type    = "int"
+default = 14
+writes  = "terminal.size"
+
+[[question]]
+id      = "wezterm_font"
+prompt  = "WezTerm font?"
+type    = "enum"
+options = ["JetBrainsMono Nerd Font", "SauceCodePro Nerd Font", "FiraCode Nerd Font"]
+default = "JetBrainsMono Nerd Font"
+writes  = "terminal.wezterm_font"
+
+[[question]]
+id      = "alacritty_font"
+prompt  = "Alacritty font?"
+type    = "enum"
+options = ["SauceCodePro Nerd Font", "JetBrainsMono Nerd Font", "FiraCode Nerd Font"]
+default = "SauceCodePro Nerd Font"
+writes  = "terminal.alacritty_font"
+
+# ----- Optional integrations -----
+
+[[question]]
+id      = "kube_config_path"
+prompt  = "KUBECONFIG path? (Leave blank for default ~/.kube/config.)"
+type    = "path"
+default = ""
+writes  = "kube.config"

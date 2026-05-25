@@ -1,0 +1,168 @@
+# bundle.toml — packaged-file -> target-path map.
+#
+# Each [[file]] entry packages one file (or directory, for symlink/copy-tree)
+# from `bundle/` onto the user's machine. The install/render skill walks this
+# top-to-bottom; entries are independent unless `requires` says otherwise.
+#
+# Keys:
+#   src       — path inside bundle/ (no leading slash)
+#   dst       — target path. Tildes expand to $HOME. $XDG_CONFIG_HOME and
+#               other env vars are resolved; falls back to $HOME/.config when unset.
+#   render    — "copy" | "template" | "symlink" | "copy-tree"
+#   os        — optional. Restrict to a single OS key from lib/os-detect.md.
+#   requires  — optional array of tool keys from tools.toml. The render is
+#               skipped (with a warning) if any required tool isn't installed.
+#   scrubbed  — optional bool. When true, the scrub skill asserts no patterns
+#               from scrub.toml match this file. Lint fails the run otherwise.
+#   mode      — optional octal string ("0755"). Defaults to 0644, or 0755 for
+#               files in bin/ paths.
+
+# ---------- fish ----------
+
+[[file]]
+src      = "fish/config.fish.tmpl"
+dst      = "$XDG_CONFIG_HOME/fish/config.fish"
+render   = "template"
+requires = ["fish"]
+scrubbed = true
+
+[[file]]
+src      = "fish/lib"
+dst      = "$XDG_CONFIG_HOME/fish/lib"
+render   = "copy-tree"
+requires = ["fish"]
+scrubbed = true
+
+[[file]]
+src      = "fish/functions"
+dst      = "$XDG_CONFIG_HOME/fish/functions"
+render   = "copy-tree"
+requires = ["fish"]
+scrubbed = true
+
+# The insh theme: every prompt file ships individually into fish/functions/
+# so fish auto-loads them. Theme's own functions/ folder is layered on top.
+[[file]]
+src      = "fish/themes/insh/fish_prompt.fish"
+dst      = "$XDG_CONFIG_HOME/fish/functions/fish_prompt.fish"
+render   = "copy"
+requires = ["fish"]
+
+[[file]]
+src      = "fish/themes/insh/fish_right_prompt.fish"
+dst      = "$XDG_CONFIG_HOME/fish/functions/fish_right_prompt.fish"
+render   = "copy"
+requires = ["fish"]
+
+[[file]]
+src      = "fish/themes/insh/fish_mode_prompt.fish"
+dst      = "$XDG_CONFIG_HOME/fish/functions/fish_mode_prompt.fish"
+render   = "copy"
+requires = ["fish"]
+
+[[file]]
+src      = "fish/themes/insh/fish_title.fish"
+dst      = "$XDG_CONFIG_HOME/fish/functions/fish_title.fish"
+render   = "copy"
+requires = ["fish"]
+
+[[file]]
+src      = "fish/themes/insh/fish_greeting.fish"
+dst      = "$XDG_CONFIG_HOME/fish/functions/fish_greeting.fish"
+render   = "copy"
+requires = ["fish"]
+
+[[file]]
+src      = "fish/themes/insh/functions"
+dst      = "$XDG_CONFIG_HOME/fish/functions"
+render   = "copy-tree"   # merges files into target dir; never overwrites unrelated ones
+requires = ["fish"]
+
+# ---------- alacritty ----------
+
+[[file]]
+src      = "alacritty/alacritty.toml.tmpl"
+dst      = "$XDG_CONFIG_HOME/alacritty/alacritty.toml"
+render   = "template"
+requires = ["alacritty"]
+scrubbed = true
+
+# ---------- wezterm ----------
+
+[[file]]
+src      = "wezterm/wezterm.lua"
+dst      = "$XDG_CONFIG_HOME/wezterm/wezterm.lua"
+render   = "copy"          # runtime-branched, no templating needed
+requires = ["wezterm"]
+scrubbed = true
+
+# ---------- tmux ----------
+
+[[file]]
+src      = "tmux/tmux.conf"
+dst      = "~/.tmux.conf"
+render   = "copy"
+requires = ["tmux"]
+scrubbed = true
+
+[[file]]
+src      = "tmux/tmux-outer.conf"
+dst      = "~/.tmux-outer.conf"
+render   = "copy"
+requires = ["tmux"]
+scrubbed = true
+
+[[file]]
+src      = "tmux/tmux-style.conf"
+dst      = "~/.tmux-style.conf"
+render   = "copy"
+requires = ["tmux"]
+scrubbed = true
+
+[[file]]
+src      = "tmux/tmux-remote.conf"
+dst      = "~/.tmux-remote.conf"
+render   = "copy"
+requires = ["tmux"]
+scrubbed = true
+
+# wezterm-outer-tmux.sh resolves tmux at runtime (no hard-coded /opt/homebrew)
+[[file]]
+src      = "bin/wezterm-outer-tmux.sh"
+dst      = "~/bin/wezterm-outer-tmux.sh"
+render   = "copy"
+requires = ["tmux", "wezterm"]
+mode     = "0755"
+scrubbed = true
+
+# ---------- neovim ----------
+
+[[file]]
+src      = "nvim/init.lua"
+dst      = "$XDG_CONFIG_HOME/nvim/init.lua"
+render   = "copy"
+requires = ["neovim"]
+scrubbed = true
+
+[[file]]
+src      = "nvim/lazy-lock.json"
+dst      = "$XDG_CONFIG_HOME/nvim/lazy-lock.json"
+render   = "copy"
+requires = ["neovim"]
+
+[[file]]
+src      = "nvim/lua"
+dst      = "$XDG_CONFIG_HOME/nvim/lua"
+render   = "copy-tree"
+requires = ["neovim"]
+scrubbed = true
+
+# ---------- pass scaffolding ----------
+# The wizard creates the actual store; bundle only ships a README that explains
+# the layout convention (e.g. api/openai, ssh/*, etc.) the user can choose to follow.
+
+[[file]]
+src      = "pass/README.md"
+dst      = "~/.password-store/.shll-layout.md"
+render   = "copy"
+requires = ["pass"]

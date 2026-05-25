@@ -1,0 +1,307 @@
+# tools.toml — install matrix for shll v1.
+#
+# Schema: one [<tool>.<os>] table per (tool, OS) pair. Recognized OS keys are
+# defined in lib/os-detect.md: macos, debian, ubuntu, arch, fedora, freebsd,
+# openbsd, linux-other.
+#
+# Per-row keys:
+#   check  — shell command that exits 0 if the tool is already installed.
+#            Skill skips `cmd` when check passes.
+#   cmd    — install command. Run via the user's shell with sudo as needed.
+#            Multi-step setup belongs in `pre` / `post` arrays.
+#   pre    — array of commands run before `cmd` (e.g. repo enable).
+#   post   — array of commands run after `cmd` (e.g. shell-as-default).
+#   action — set to "manual" with `url` when no automatic install is available.
+#   url    — documentation link for manual installs.
+#
+# When a tool has no row for the detected OS, the skill falls back to the
+# `[<tool>.linux-other]` row (or `[<tool>.manual]`) if present, else errors.
+
+# ---------------------------------------------------------------------------
+# wezterm
+# ---------------------------------------------------------------------------
+
+[wezterm.macos]
+check = "command -v wezterm"
+cmd   = "brew install --cask wezterm"
+
+[wezterm.debian]
+check = "command -v wezterm"
+pre   = [
+  "curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg",
+  "echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list",
+  "sudo apt-get update",
+]
+cmd   = "sudo apt-get install -y wezterm"
+
+[wezterm.ubuntu]
+check = "command -v wezterm"
+pre   = [
+  "curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg",
+  "echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list",
+  "sudo apt-get update",
+]
+cmd   = "sudo apt-get install -y wezterm"
+
+[wezterm.arch]
+check = "command -v wezterm"
+cmd   = "sudo pacman -S --noconfirm wezterm"
+
+[wezterm.fedora]
+check = "command -v wezterm"
+pre   = ["sudo dnf copr enable -y wezfurlong/wezterm-nightly"]
+cmd   = "sudo dnf install -y wezterm"
+
+[wezterm.freebsd]
+check  = "command -v wezterm"
+action = "manual"
+url    = "https://wezterm.org/install/freebsd.html"
+
+[wezterm.openbsd]
+check  = "command -v wezterm"
+action = "manual"
+url    = "https://wezterm.org/install/linux.html#openbsd"
+
+[wezterm.manual]
+url = "https://wezterm.org/install/"
+
+# ---------------------------------------------------------------------------
+# alacritty
+# ---------------------------------------------------------------------------
+
+[alacritty.macos]
+check = "command -v alacritty"
+cmd   = "brew install --cask alacritty"
+
+[alacritty.debian]
+check = "command -v alacritty"
+cmd   = "sudo apt-get install -y alacritty"
+
+[alacritty.ubuntu]
+check = "command -v alacritty"
+pre   = ["sudo add-apt-repository -y ppa:aslatter/ppa", "sudo apt-get update"]
+cmd   = "sudo apt-get install -y alacritty"
+
+[alacritty.arch]
+check = "command -v alacritty"
+cmd   = "sudo pacman -S --noconfirm alacritty"
+
+[alacritty.fedora]
+check = "command -v alacritty"
+cmd   = "sudo dnf install -y alacritty"
+
+[alacritty.freebsd]
+check = "command -v alacritty"
+cmd   = "sudo pkg install -y alacritty"
+
+[alacritty.openbsd]
+check = "command -v alacritty"
+cmd   = "doas pkg_add alacritty"
+
+[alacritty.manual]
+url = "https://alacritty.org/install.html"
+
+# ---------------------------------------------------------------------------
+# tmux
+# ---------------------------------------------------------------------------
+
+[tmux.macos]
+check = "command -v tmux"
+cmd   = "brew install tmux"
+
+[tmux.debian]
+check = "command -v tmux"
+cmd   = "sudo apt-get install -y tmux"
+
+[tmux.ubuntu]
+check = "command -v tmux"
+cmd   = "sudo apt-get install -y tmux"
+
+[tmux.arch]
+check = "command -v tmux"
+cmd   = "sudo pacman -S --noconfirm tmux"
+
+[tmux.fedora]
+check = "command -v tmux"
+cmd   = "sudo dnf install -y tmux"
+
+[tmux.freebsd]
+check = "command -v tmux"
+cmd   = "sudo pkg install -y tmux"
+
+[tmux.openbsd]
+check = "command -v tmux"
+cmd   = "doas pkg_add tmux"
+
+# ---------------------------------------------------------------------------
+# fish
+# ---------------------------------------------------------------------------
+
+[fish.macos]
+check = "command -v fish"
+cmd   = "brew install fish"
+post  = [
+  "grep -qx \"$(brew --prefix)/bin/fish\" /etc/shells || (echo \"$(brew --prefix)/bin/fish\" | sudo tee -a /etc/shells)",
+]
+
+[fish.debian]
+check = "command -v fish"
+pre   = [
+  "sudo apt-get install -y software-properties-common",
+  "sudo apt-add-repository -y ppa:fish-shell/release-3 || true",
+  "sudo apt-get update",
+]
+cmd   = "sudo apt-get install -y fish"
+
+[fish.ubuntu]
+check = "command -v fish"
+pre   = [
+  "sudo apt-add-repository -y ppa:fish-shell/release-3",
+  "sudo apt-get update",
+]
+cmd   = "sudo apt-get install -y fish"
+
+[fish.arch]
+check = "command -v fish"
+cmd   = "sudo pacman -S --noconfirm fish"
+
+[fish.fedora]
+check = "command -v fish"
+cmd   = "sudo dnf install -y fish"
+
+[fish.freebsd]
+check = "command -v fish"
+cmd   = "sudo pkg install -y fish"
+
+[fish.openbsd]
+check = "command -v fish"
+cmd   = "doas pkg_add fish"
+
+# ---------------------------------------------------------------------------
+# fzf
+# ---------------------------------------------------------------------------
+
+[fzf.macos]
+check = "command -v fzf"
+cmd   = "brew install fzf"
+
+[fzf.debian]
+check = "command -v fzf"
+cmd   = "sudo apt-get install -y fzf"
+
+[fzf.ubuntu]
+check = "command -v fzf"
+cmd   = "sudo apt-get install -y fzf"
+
+[fzf.arch]
+check = "command -v fzf"
+cmd   = "sudo pacman -S --noconfirm fzf"
+
+[fzf.fedora]
+check = "command -v fzf"
+cmd   = "sudo dnf install -y fzf"
+
+[fzf.freebsd]
+check = "command -v fzf"
+cmd   = "sudo pkg install -y fzf"
+
+[fzf.openbsd]
+check = "command -v fzf"
+cmd   = "doas pkg_add fzf"
+
+# ---------------------------------------------------------------------------
+# neovim
+# ---------------------------------------------------------------------------
+
+[neovim.macos]
+check = "command -v nvim"
+cmd   = "brew install neovim"
+
+[neovim.debian]
+check = "command -v nvim"
+cmd   = "sudo apt-get install -y neovim"
+
+[neovim.ubuntu]
+check = "command -v nvim"
+cmd   = "sudo apt-get install -y neovim"
+
+[neovim.arch]
+check = "command -v nvim"
+cmd   = "sudo pacman -S --noconfirm neovim"
+
+[neovim.fedora]
+check = "command -v nvim"
+cmd   = "sudo dnf install -y neovim"
+
+[neovim.freebsd]
+check = "command -v nvim"
+cmd   = "sudo pkg install -y neovim"
+
+[neovim.openbsd]
+check = "command -v nvim"
+cmd   = "doas pkg_add neovim"
+
+# ---------------------------------------------------------------------------
+# pass — needs gnupg as a dependency
+# ---------------------------------------------------------------------------
+
+[pass.macos]
+check = "command -v pass && command -v gpg"
+cmd   = "brew install pass gnupg"
+
+[pass.debian]
+check = "command -v pass && command -v gpg"
+cmd   = "sudo apt-get install -y pass gnupg"
+
+[pass.ubuntu]
+check = "command -v pass && command -v gpg"
+cmd   = "sudo apt-get install -y pass gnupg"
+
+[pass.arch]
+check = "command -v pass && command -v gpg"
+cmd   = "sudo pacman -S --noconfirm pass gnupg"
+
+[pass.fedora]
+check = "command -v pass && command -v gpg"
+cmd   = "sudo dnf install -y pass gnupg2"
+
+[pass.freebsd]
+check = "command -v pass && command -v gpg"
+cmd   = "sudo pkg install -y password-store gnupg"
+
+[pass.openbsd]
+check = "command -v pass && command -v gpg"
+cmd   = "doas pkg_add password-store gnupg"
+
+# ---------------------------------------------------------------------------
+# Optional: a fish-nerd-font for the prompt + terminal config
+# ---------------------------------------------------------------------------
+
+[nerd-font-sauce.macos]
+check = "fc-list 2>/dev/null | grep -qi SauceCodePro || ls ~/Library/Fonts/SauceCodePro* >/dev/null 2>&1"
+cmd   = "brew install --cask font-sauce-code-pro-nerd-font"
+
+[nerd-font-jetbrains.macos]
+check = "fc-list 2>/dev/null | grep -qi 'JetBrainsMono Nerd' || ls ~/Library/Fonts/JetBrainsMonoNerd* >/dev/null 2>&1"
+cmd   = "brew install --cask font-jetbrains-mono-nerd-font"
+
+[nerd-font-sauce.debian]
+check  = "fc-list | grep -qi SauceCodePro"
+action = "manual"
+url    = "https://www.nerdfonts.com/font-downloads"
+
+[nerd-font-jetbrains.debian]
+check  = "fc-list | grep -qi 'JetBrainsMono Nerd'"
+action = "manual"
+url    = "https://www.nerdfonts.com/font-downloads"
+
+# A general fallback row for nerd fonts on Linux:
+[nerd-font-sauce.linux-other]
+check  = "fc-list | grep -qi SauceCodePro"
+action = "manual"
+url    = "https://www.nerdfonts.com/font-downloads"
+
+[nerd-font-jetbrains.linux-other]
+check  = "fc-list | grep -qi 'JetBrainsMono Nerd'"
+action = "manual"
+url    = "https://www.nerdfonts.com/font-downloads"

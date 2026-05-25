@@ -1,0 +1,17 @@
+# Upstream tracks no user state. User forks/downstreams remove these ignores.
+state/user.toml
+state/user.*.toml
+!state/.gitkeep
+
+# Backups from installer runs (only ever appear on a user's machine, never in repo)
+.shll-backup/
+
+# Editor + OS noise
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Local test scratch
+tmp/
+*.log

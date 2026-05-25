@@ -1,0 +1,51 @@
+[colors.primary]
+background = "#000000"
+
+[debug]
+print_events = false
+render_timer = false
+
+[env]
+TERM = "xterm-256color"
+
+[font]
+size = {{ user.terminal.size | default("14") }}.0
+
+[font.bold]
+family = {{ user.terminal.alacritty_font | default("SauceCodePro Nerd Font") }}
+style = "Medium"
+
+[font.normal]
+family = {{ user.terminal.alacritty_font | default("SauceCodePro Nerd Font") }}
+style = "Medium"
+
+# Alt+F → fullscreen (cross-platform)
+[[keyboard.bindings]]
+action = "ToggleSimpleFullscreen"
+key    = "F"
+mods   = "Alt"
+
+# Cmd/Super+E → send inner-tmux prefix (C-\, U+001C)
+[[keyboard.bindings]]
+chars = "\u001C"
+key   = "E"
+mods  = {{ cmd_or_super }}
+
+# Cmd/Super+R → send outer-tmux prefix (C-], U+001D)
+[[keyboard.bindings]]
+chars = "\u001D"
+key   = "R"
+mods  = {{ cmd_or_super }}
+
+# Cmd/Super+W → send C-_ (U+001F) — utility chord
+[[keyboard.bindings]]
+chars = "\u001F"
+key   = "W"
+mods  = {{ cmd_or_super }}
+
+# Ctrl+S also sends C-_, kept as in the original config so the chord works
+# even on Linux WMs that swallow Super.
+[[keyboard.bindings]]
+action = "ReceiveChar"
+key    = "S"
+mods   = "Control"

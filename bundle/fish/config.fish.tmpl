@@ -1,0 +1,77 @@
+if status is-interactive
+  source ~/.config/fish/lib/map.fish
+  source ~/.config/fish/lib/calcolor.fish
+  source ~/.config/fish/lib/mosh.fish
+  source ~/.config/fish/lib/puppet.fish
+  source ~/.config/fish/lib/kube.fish
+  source ~/.config/fish/lib/tmux.fish
+
+  # API keys sourced from pass (set up by /shll-pass). Falls back silently
+  # if pass isn't initialized yet — populate the entry then re-source.
+  set -gx OPENAI_API_KEY {{ pass:api/openai }}
+
+  set -g theme_display_k8s_context yes
+  set -g theme_display_k8s_namespace yes
+  set -g fish_term24bit 1
+  set -g COLORTERM truecolor
+
+  set -gx LC_ALL en_US.UTF-8
+
+  alias vi=nvim
+  alias vim=nvim
+  set -gx EDITOR nvim
+
+  alias w1='watch -n 1'
+  alias w2='watch -n 2'
+
+  # bobthefish-compatible (insh theme) settings
+  set -g theme_color_scheme insh
+
+  # pass aliases
+  alias p "pass show"
+  alias c "pass show -c"
+  set -gx PASSWORD_STORE_X_SELECTION primary
+
+  function fish_hybrid_key_bindings --description \
+  "Vi-style bindings that inherit emacs-style bindings in all modes"
+      for mode in default insert visual
+          fish_default_key_bindings -M $mode
+      end
+      fish_vi_key_bindings --no-erase
+  end
+  set -g fish_key_bindings fish_hybrid_key_bindings
+
+  function sc
+    set controlpath ~/.ssh/controlmasters
+    ssh -S $controlpath/(ls $controlpath | fzf) -O exit gone
+  end
+
+end
+
+# macOS Homebrew: arch-pin brew on Apple Silicon
+if test (uname -s) = Darwin
+  if test (uname -m) = arm64
+    alias brew='arch -arm64 brew'
+  end
+end
+
+# fish_add_path is safe to call unconditionally; it deduplicates.
+test -d $HOME/bin            ; and fish_add_path $HOME/bin
+test -d $HOME/.cargo/bin     ; and fish_add_path $HOME/.cargo/bin
+test -d $HOME/.opencode/bin  ; and fish_add_path $HOME/.opencode/bin
+
+# pnpm
+if test -d "$HOME/Library/pnpm"
+  set -gx PNPM_HOME "$HOME/Library/pnpm"
+  if not string match -q -- $PNPM_HOME $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
+  end
+else if test -d "$HOME/.local/share/pnpm"
+  set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+  if not string match -q -- $PNPM_HOME $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
+  end
+end
+
+# OrbStack (macOS-only)
+test -f "$HOME/.orbstack/shell/init2.fish" ; and source "$HOME/.orbstack/shell/init2.fish"

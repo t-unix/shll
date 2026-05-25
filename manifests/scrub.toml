@@ -1,0 +1,120 @@
+# scrub.toml — rules for stripping secrets/work-specific content during
+# (a) seeding bundle/ from a live host, and (b) lint-asserting that
+# nothing in bundle/ matches these patterns at commit time.
+#
+# Each [[rule]] entry:
+#   id          — short stable identifier (used in error messages)
+#   pattern     — regex (Rust regex / PCRE-lite syntax). Multi-line off by default.
+#   action      — what to do at seed time:
+#                   "drop-binding"  — for tmux: delete the whole `bind-key X ...` line.
+#                                     `bind` arg is the key character.
+#                   "drop-line"     — delete the matched line.
+#                   "comment-out"   — prepend a comment char ("# " for sh/fish/conf,
+#                                     "-- " for lua, etc. inferred from extension).
+#                   "replace"       — replace the entire match with `replacement`.
+#                   "fail"          — block seeding; surface the match to the user.
+#   replacement — used with action="replace". May reference {{ pass:<path> }}.
+#   bind        — used with action="drop-binding". The tmux key letter.
+#   files       — optional glob restriction (default: all files in bundle/).
+#   reason      — short note for telemetry / commit messages.
+
+# ----- Apple-internal proxy bindings (user said: strip) -----
+
+[[rule]]
+id          = "tmux-bind-H-muc-proxy"
+pattern     = 'proxy\.muc\.sd\.apple\.com'
+action      = "drop-binding"
+bind        = "H"
+files       = ["tmux/*.conf"]
+reason      = "Apple-internal HTTP proxy export"
+
+[[rule]]
+id          = "tmux-bind-V-dps-proxy"
+pattern     = 'dps\.iso\.apple\.com'
+action      = "drop-binding"
+bind        = "V"
+files       = ["tmux/*.conf"]
+reason      = "Apple-internal HTTPS proxy export"
+
+[[rule]]
+id          = "tmux-bind-A-umlaut-pc"
+pattern     = 'send-keys "pc \\t"'
+action      = "drop-binding"
+bind        = "Ä"
+files       = ["tmux/*.conf"]
+reason      = "Work-internal `pc` shortcut"
+
+# Catch any stray references that aren't on bind lines (e.g. in fish lib files
+# or env-var defaults) — comment them out and warn.
+
+[[rule]]
+id      = "any-muc-proxy-hostname"
+pattern = '(proxy|sierra|muc)\.(muc\.sd\.|local|app\.|cloud\.|iso\.)?apple\.com'
+action  = "comment-out"
+reason  = "Apple-internal hostname"
+
+# ----- API keys / secrets -----
+
+[[rule]]
+id          = "openai-api-key-fish"
+pattern     = 'set -gx OPENAI_API_KEY sk-(proj-)?[A-Za-z0-9_-]+'
+action      = "replace"
+replacement = 'set -gx OPENAI_API_KEY {{ pass:api/openai }}'
+files       = ["fish/**/*.fish", "fish/**/*.fish.tmpl"]
+reason      = "Plaintext OpenAI API key"
+
+[[rule]]
+id          = "openai-api-key-bash"
+pattern     = 'export OPENAI_API_KEY=sk-(proj-)?[A-Za-z0-9_-]+'
+action      = "replace"
+replacement = 'export OPENAI_API_KEY={{ pass:api/openai }}'
+files       = ["**/*.sh", "**/*.bash", "**/*.bashrc*"]
+reason      = "Plaintext OpenAI API key"
+
+# Generic catch-all for any sk- key shape — runs as lint (action=fail) so a
+# re-seed cannot accidentally bypass the above replace rules.
+
+[[rule]]
+id      = "generic-openai-key-leak"
+pattern = 'sk-(proj-)?[A-Za-z0-9_-]{20,}'
+action  = "fail"
+reason  = "Bare OpenAI-shaped key — never commit"
+
+# Anthropic key shape (sk-ant-...) — same logic
+[[rule]]
+id      = "anthropic-key-leak"
+pattern = 'sk-ant-[A-Za-z0-9_-]{20,}'
+action  = "fail"
+reason  = "Bare Anthropic API key"
+
+# GitHub PATs
+[[rule]]
+id      = "github-pat"
+pattern = 'gh[pousr]_[A-Za-z0-9]{36,}'
+action  = "fail"
+reason  = "GitHub personal access token"
+
+# Private keys
+[[rule]]
+id      = "openssh-private-key"
+pattern = '-----BEGIN (OPENSSH|RSA|DSA|EC|PGP) PRIVATE KEY-----'
+action  = "fail"
+reason  = "Private key block"
+
+# AWS access keys
+[[rule]]
+id      = "aws-access-key-id"
+pattern = '\bAKIA[0-9A-Z]{16}\b'
+action  = "fail"
+reason  = "AWS access key id"
+
+# ----- Path / host hardcodes -----
+
+# /opt/homebrew is fine on macOS arm64 but breaks on Linux + macOS Intel.
+# Don't fail on it; just warn so the seed pass can rewrite into `command tmux`.
+[[rule]]
+id      = "homebrew-arm64-hardcode"
+pattern = '/opt/homebrew/bin/tmux'
+action  = "comment-out"
+files   = ["bin/*.sh"]
+reason  = "Hard-coded Homebrew arm64 path — should resolve tmux from PATH"
