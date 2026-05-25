@@ -48,7 +48,3 @@ function knondockerhubimages
     end
   end
 end
-
-function linstor
-  kubectl exec -c linstor-controller -ti -n linstor linstor-linstor-controller-0 -- linstor $argv
-end
