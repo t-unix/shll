@@ -498,10 +498,9 @@ function __bobthefish_prompt_vi -S -d 'Display vi mode'
     switch $fish_bind_mode
         case default
             __bobthefish_start_segment $color_vi_mode_default
-            echo -n 'גּ '
-        case insert
-            __bobthefish_start_segment $color_vi_mode_insert
             echo -n ' '
+        case insert
+            # render nothing — insert is the default working state
         case replace_one replace-one
             __bobthefish_start_segment $color_vi_mode_insert
             echo -n 'R '
